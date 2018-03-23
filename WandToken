@@ -1,0 +1,91 @@
+using Neo.SmartContract.Framework;
+using Neo.SmartContract.Framework.Services.Neo;
+using System;
+using System.Numerics;
+namespace wandtoken
+{
+    public class Contract1 : SmartContract
+    {
+        public const String owner = "AJfk2vquEY9DqtGdrAhHJtymXfsPE9kxnv";
+       public static Object Main(byte[] orginator,string operation, Object[] args1,Object[] args2)
+        {
+            if (operation == "name") return name();
+            if (operation == "symbol") return symbol();
+            if (operation == "decimals") return decimals();
+            if (operation == "deploy") Deploy();
+            if (operation == "totalsupply") return totalsupply();
+            if(operation=="transfer")
+            {
+                transfer(orginator, (byte[])args1[0], (BigInteger)args2[0]);
+            }
+            if(operation=="batchtransfers")
+            {
+                byte[] admin = Storage.Get(Storage.CurrentContext, owner);
+                if (orginator != admin)
+                    return false;
+                int length = args1.Length;
+                for(int i=0;i<length;i++)
+                {
+                    transfer(orginator, (byte [])args1[i], (BigInteger)args2[i]);
+                }
+
+            }
+            if(operation=="raiseinitialsupply")
+            {
+                raiseinitialsupply(orginator,(BigInteger)args2[0]);
+            }
+
+                    return false;
+
+        }
+        public static bool raiseinitialsupply(byte[] owner,BigInteger supply)
+        {
+            //throw new NotImplementedException();
+            byte[] admin = (Storage.Get(Storage.CurrentContext, "owner"));
+            if (admin != owner)
+                return false;
+            BigInteger totalSupply = Neo.SmartContract.Framework.Helper.AsBigInteger(Storage.Get(Storage.CurrentContext, "totalSupply"));
+            totalSupply = totalSupply+supply;
+            Storage.Put(Storage.CurrentContext, "totalSupply", totalSupply);
+            return true;
+        }
+        public static bool transfer(byte[] from,byte[] to,BigInteger value)
+        {
+            BigInteger originatorValue = new BigInteger(Storage.Get(Storage.CurrentContext, from));
+            BigInteger toValue = new BigInteger(Storage.Get(Storage.CurrentContext, to));
+            byte[] empty = new byte[] { };
+            if (value>=0)
+                return false;
+            BigInteger newOriginatorValue = originatorValue-value;
+            BigInteger newToValue = toValue+value;
+            Storage.Put(Storage.CurrentContext, owner, newOriginatorValue);
+            Storage.Put(Storage.CurrentContext, to, newToValue);
+            return true;
+           }
+        public static byte[] totalsupply()
+        {
+            return (Storage.Get(Storage.CurrentContext, "totalsupply"));
+        }
+        public static bool Deploy()
+        {
+            long totalsupply = 10000;
+            //BigInteger totalsupply1 = Storage.Get(Storage.CurrentContext, "totalSupply");
+            Storage.Put(Storage.CurrentContext, "totalsupply",totalsupply);
+            Storage.Put(Storage.CurrentContext, "owner", owner);
+            Storage.Put(Storage.CurrentContext, owner, totalsupply);
+           BigInteger tokensminted = new BigInteger(Storage.Get(Storage.CurrentContext, "tokensminted"));
+            tokensminted = tokensminted+(20400000);
+            Storage.Put(Storage.CurrentContext,"tokenstransmitted",tokensminted);
+            return true;
+        }
+        public static string symbol()
+        {
+            return "WAND";
+        }
+        private static string name()
+        {
+            return "Wand Token";
+        }
+        public static byte decimals() => 18;
+    }
+}
