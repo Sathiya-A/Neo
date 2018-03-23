@@ -1,0 +1,76 @@
+using Neo.SmartContract.Framework;
+using Neo.SmartContract.Framework.Services.Neo;
+using System;
+using System.Numerics;
+namespace Integrator
+{
+    public class Contract1 : SmartContract
+    {
+        public static Object Main(String operation,object[] args)
+        {
+            if(operation=="deploy")
+            {
+                 deploy((byte[])args[0]);
+            }
+            if(operation== "addAuthorizedAddress")
+            {
+                return addAuthorizedAddress((byte[])args[0],(byte[])args[1]);
+            }
+            //Storage.Put(Storage.CurrentContext, "Hello", "World");
+            if(operation=="change approver")
+            {
+                return changeapprover((byte[])args[0],(byte[])args[1]);
+            }
+            if(operation=="remove authorised users")
+            {
+                return removeusers((byte[])args[0], (byte[])args[1]);
+            }
+            return true;
+        }
+
+        private static bool removeusers(byte[] orginator, byte[] user)
+        {
+            Runtime.Notify("authorised user removed");
+            byte[] approver = Storage.Get(Storage.CurrentContext, "approver");
+            if (approver != orginator)
+            {
+                return false;
+            }
+            byte[] authorisedAddress = user.Concat("authorised".AsByteArray());
+            Storage.Put(Storage.CurrentContext, authorisedAddress, "false");
+            return true;
+        }
+        private static bool changeapprover(byte[] orginator,byte[] newapprover)
+        {
+            Runtime.Notify("change approver");
+            byte[] approver = Storage.Get(Storage.CurrentContext, "approver");
+            if (approver != orginator)
+            {
+                return false;
+            }
+            Runtime.Notify("change approver1");
+            Storage.Put(Storage.CurrentContext, "approver", newapprover);
+            return true;
+        }
+
+        private static bool addAuthorizedAddress(byte[] orginator,byte[] user)
+        {
+            Runtime.Notify("authorised user added");
+            byte[] approver = Storage.Get(Storage.CurrentContext, "approver");
+             if (approver != orginator)
+            {
+                return false;
+            }
+            byte[] authorisedAddress = user.Concat("authorised".AsByteArray());
+            Storage.Put(Storage.CurrentContext, authorisedAddress,"true");
+            
+            return true;
+        }
+
+        private static void deploy(byte[] approver)
+        {
+            Runtime.Notify("in deploy");
+            Storage.Put(Storage.CurrentContext, "approver", approver);
+        }
+    }
+}
