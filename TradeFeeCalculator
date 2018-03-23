@@ -1,0 +1,94 @@
+using Neo.SmartContract.Framework;
+using Neo.SmartContract.Framework.Services.Neo;
+using System;
+using System.Numerics;
+//using System.Numerics.BigInteger;
+namespace trade
+{
+    public class Contract1 : SmartContract
+    {
+        public static Object Main( String operation, Object[] args, int[] args2)
+        {
+            if (operation == "Deploy") return deploy((byte[])args[0]);
+            if (operation == "update fees schedule")
+            {
+                updatefeeschedule((byte[])args[0], (int)args[1], (int)args[2], (int)args[3]);
+            }
+            if (operation == "calculation")
+            {
+                return caltradefee((BigInteger)args[0], (int)args[1]);
+            }
+            if (operation == "multical")
+            {
+                int length = args.Length;
+                for (int i = 0; i <= length; i++)
+                {
+                    caltradefee((BigInteger)args[i], args2[i]);
+                }
+            }
+
+            return true;
+            //Storage.Put(Storage.CurrentContext, "Hello", "World");
+        }
+        public static BigInteger caltradefee(BigInteger value, int feeindex)
+        {
+            BigInteger a = 1;
+            Runtime.Notify("in caltradefee");
+            if (feeindex >= 0 && feeindex <= 2)
+            {
+
+                if (feeindex == 0)
+                {
+                    a = new BigInteger(Storage.Get(Storage.CurrentContext, "basetoken"));
+
+
+
+                }
+                else if (feeindex == 1)
+                {
+                    a = new BigInteger(Storage.Get(Storage.CurrentContext, "ethertoken"));
+
+
+                }
+                else if (feeindex == 0)
+                {
+                    a = new BigInteger(Storage.Get(Storage.CurrentContext, "normaltoken"));
+
+
+                }
+                BigInteger totalfees = value * a;
+                Runtime.Notify("totalfees", totalfees);
+                return totalfees;
+            }
+
+            return 1;
+        }
+        public static bool deploy(byte[] owner)
+        {
+            Runtime.Notify("in deploy");
+
+           // long totalsupply = 10000;
+            Storage.Put(Storage.CurrentContext, "owner", owner);
+            //Storage.Put(Storage.CurrentContext, owner, totalsupply);
+            //Storage.Put(Storage.CurrentContext, "totalsupply", totalsupply);
+            Runtime.Notify("after deploy");
+            return true;
+        }
+        public static bool updatefeeschedule(byte[] owner, int basetokenfee, int ethertokenfee, int normaltokenfee)
+        {
+            byte[] admin = Storage.Get(Storage.CurrentContext, "owner");
+            if (admin != owner)
+            {
+                return false;
+            }
+            if (basetokenfee >= 0 && basetokenfee <= 1 && ethertokenfee >= 0 && ethertokenfee <= 1 && normaltokenfee >= 0)
+            {
+                Storage.Put(Storage.CurrentContext, "basetoken", basetokenfee);
+                Storage.Put(Storage.CurrentContext, "ethertoken", ethertokenfee);
+                Storage.Put(Storage.CurrentContext, "normaltoken", normaltokenfee);
+
+            }
+            return true;
+        }
+    }
+}
